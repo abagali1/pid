@@ -7,6 +7,7 @@
 #define g 9.81 // m/s^2
 #define M 5 // kg
 #define Y 0.01// m
+#define Fg M*g // N
 #define DT 0.25 // s
 #define n (int)(0.5 + (4*60*60) /DT) // 90 minutes
 
@@ -16,7 +17,7 @@ inline double* create_array(int length){ return malloc(sizeof(double) * length);
 pid_ctrl_t* p;
 
 double* parse_args( char** argv){
-    double* gains = create_array(3);
+    static double gains[3];
     sscanf(argv[1], "%lf", &gains[0]);
     sscanf(argv[2], "%lf", &gains[1]);
     sscanf(argv[3], "%lf", &gains[2]);
@@ -43,23 +44,23 @@ int main(int argc, char** argv){
 
     FILE* fout;
     int j;
-    double a;
+    double a, y_new;
     double* t = create_array(n);
     double* y = create_array(n);
     double* vy = create_array(n);
     t[0] = 0.0;
     y[0] = 0.0;
-    vy[0] = 0.000001;
+    vy[0] = 0.0;
 
     for(j = 1; j < n; j++){
         t[j] = t[j-1] + DT;
-        y[j] = y[j-1] + DT*vy[j-1];
+        y_new =  y[j-1] + DT*vy[j-1];
+        y[j] = y_new > 0 ? 0 : y_new;
 
-        a = pid_step(p, error(y[j]))/M;
+        a = (pid_step(p, error(y[j]))- M*g)/M;
         vy[j] = vy[j-1] + DT*a;
-
+        printf("A: %lf, VY: %lf, Y: %lf\n\n", a, vy[j], y[j]);
     }
-
 
     fout = fopen("out.txt", "w");
     for(j = 0 ; j < n ; j+=200){

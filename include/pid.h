@@ -45,6 +45,7 @@ double pid_step(pid_ctrl_t* pid, double error){
     pid->integrator += error;
     double i = pid->ki * pid->integrator;
     pid->previous_err = error;
+    printf("F: %lf\n", p);
     return p;
 }
 
